@@ -1,0 +1,4 @@
+ticket_number,plate,state,issue_date,issue_time,street,borough,violation_code,meter_zone,officer_id,precinct
+1234567890,ABC1234,NY,2024-02-10,09:15,Broadway,Manhattan,21,,9832,014
+1000000001,XYZ9876,NY,2024-03-01,13:40,Flatbush Avenue,Brooklyn,38,1234A,7241,078
+1000000002,QWE4321,NJ,2024-01-12,21:20,Queens Boulevard,Queens,67,,6021,110

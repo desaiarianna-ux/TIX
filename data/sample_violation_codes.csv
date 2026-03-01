@@ -1,0 +1,5 @@
+code,description,required_fields,notes
+21,No Parking (Street Cleaning),"[\"issueDate\",\"issueTime\",\"location.street\",\"location.borough\"]","[\"Check street cleaning signage times\"]"
+38,Meter Expired,"[\"meterZone\",\"issueDate\",\"issueTime\",\"location.street\"]","[\"Take photo of meter and receipt\"]"
+46,Double Parking,"[\"issueDate\",\"issueTime\",\"location.street\",\"location.borough\"]","[\"If driver remained in vehicle, include that in statement\"]"
+67,Hydrant Violation,"[\"issueDate\",\"issueTime\",\"location.street\"]","[\"Distance to hydrant can be contested with photos\"]"
