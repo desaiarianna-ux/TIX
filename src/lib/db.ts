@@ -20,7 +20,30 @@ export function getDb() {
         raw_json TEXT
       );
       CREATE INDEX IF NOT EXISTS idx_tickets_id ON tickets_normalized(id);
+
+      CREATE TABLE IF NOT EXISTS violation_rules (
+        code TEXT PRIMARY KEY,
+        description TEXT,
+        required_fields TEXT,
+        notes TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS streets_ref (
+        name TEXT,
+        borough TEXT,
+        normalized_name TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_street_norm ON streets_ref(normalized_name);
+
+      CREATE TABLE IF NOT EXISTS ingest_meta (
+        key TEXT PRIMARY KEY,
+        value TEXT
+      );
     `);
   }
   return dbInstance;
+}
+
+export function getDbPath() {
+  return dbPath;
 }
