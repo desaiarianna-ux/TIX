@@ -6,14 +6,6 @@ Tix helps answer:
 3. **Help me fight it**
 
 ## Run locally
-# TIX MVP
-
-Small Next.js MVP that checks whether a NY ticket/summons number **looks valid** using:
-
-1. format heuristics, and
-2. exact lookup against an ingested NYC Open Data dataset in SQLite.
-
-## I just want this to work (copy/paste)
 
 ```bash
 npm install
@@ -35,6 +27,28 @@ Open http://localhost:3000
 
 - `POST /api/validate` → full validator/scoring/defense response
 - `GET /api/health` → db readiness, table counts, last ingest timestamp
+
+## Troubleshooting (common run errors)
+
+### 1) Native SQLite package build issues (Windows)
+- Make sure you are on **Node 20+** and clean install:
+  ```bash
+  rm -rf node_modules package-lock.json
+  npm cache verify
+  npm install
+  ```
+- If install still fails on `better-sqlite3`, install Visual Studio Build Tools (Desktop development with C++), then retry.
+
+### 2) "Dataset not loaded. Run npm run ingest"
+- Run:
+  ```bash
+  npm run ingest
+  ```
+- Then refresh `/check`.
+
+### 3) API returns validation errors immediately
+- This is expected if required ticket fields are blank (date/time/street/borough/violation code).
+- Use the **Load demo** button for a known-good starting payload.
 
 ## Notes
 
