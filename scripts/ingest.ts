@@ -7,6 +7,7 @@ const dbPath = path.join(process.cwd(), "db.sqlite");
 const sampleTicketsPath = path.join(process.cwd(), "data", "sample.csv");
 const sampleCodesPath = path.join(process.cwd(), "data", "sample_violation_codes.csv");
 const sampleStreetsPath = path.join(process.cwd(), "data", "sample_streets.csv");
+const samplePath = path.join(process.cwd(), "data", "sample.csv");
 
 type ParsedRecord = Record<string, string>;
 
@@ -25,6 +26,9 @@ function parseCsv(text: string): ParsedRecord[] {
         cur += '"';
         i += 1;
       } else insideQuotes = !insideQuotes;
+      } else {
+        insideQuotes = !insideQuotes;
+      }
     } else if (char === "," && !insideQuotes) {
       row.push(cur);
       cur = "";
@@ -35,6 +39,9 @@ function parseCsv(text: string): ParsedRecord[] {
       if (row.some((cell) => cell.length > 0)) rows.push(row);
       row = [];
     } else cur += char;
+    } else {
+      cur += char;
+    }
   }
 
   if (cur.length > 0 || row.length > 0) {
@@ -63,6 +70,17 @@ async function loadCsvText(url: string, fallbackPath: string): Promise<string> {
   } catch (error) {
     console.warn(`Falling back to local CSV (${fallbackPath}) because download failed: ${String(error)}`);
     return fs.readFileSync(fallbackPath, "utf-8");
+async function loadCsvText(): Promise<string> {
+  try {
+    const response = await fetch(DATASET_URL);
+    if (!response.ok) {
+      throw new Error(`Download failed with status ${response.status}`);
+    }
+    console.log(`Downloaded dataset from ${DATASET_URL}`);
+    return await response.text();
+  } catch (error) {
+    console.warn(`Falling back to sample CSV because dataset download failed: ${String(error)}`);
+    return fs.readFileSync(samplePath, "utf-8");
   }
 }
 
@@ -81,6 +99,9 @@ async function main() {
   const ticketRecords = parseCsv(ticketsCsv);
   const codeRecords = parseCsv(fs.readFileSync(sampleCodesPath, "utf-8"));
   const streetRecords = parseCsv(fs.readFileSync(sampleStreetsPath, "utf-8"));
+async function main() {
+  const csvText = await loadCsvText();
+  const records = parseCsv(csvText);
 
   const db = new Database(dbPath);
   db.exec(`
@@ -121,6 +142,11 @@ async function main() {
   db.exec("DELETE FROM streets_ref");
 
   const insertTicket = db.prepare(`
+  `);
+
+  db.exec("DELETE FROM tickets_normalized");
+
+  const insert = db.prepare(`
     INSERT OR REPLACE INTO tickets_normalized
     (id, source, agency, issue_date, plate, violation_code, fine_amount, raw_json)
     VALUES (@id, @source, @agency, @issue_date, @plate, @violation_code, @fine_amount, @raw_json)
@@ -143,6 +169,12 @@ async function main() {
       const id = item.summons_number?.trim();
       if (!id) continue;
       insertTicket.run({
+  const transaction = db.transaction((batch: ParsedRecord[]) => {
+    for (const item of batch) {
+      const id = item.summons_number?.trim();
+      if (!id) continue;
+
+      insert.run({
         id,
         source: "NYC OpenData Parking Violations (nc67-uf89)",
         agency: item.issuing_agency || null,
@@ -184,6 +216,11 @@ async function main() {
   };
 
   console.log(`Ingestion complete: ${JSON.stringify(counts)} into ${dbPath}`);
+  });
+
+  transaction(records);
+  const count = db.prepare("SELECT COUNT(*) as total FROM tickets_normalized").get() as { total: number };
+  console.log(`Ingestion complete. Loaded ${count.total} rows into ${dbPath}`);
   db.close();
 }
 
